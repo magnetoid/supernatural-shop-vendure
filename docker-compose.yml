@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vendure-postgres
+    environment:
+      POSTGRES_DB: vendure
+      POSTGRES_USER: vendure
+      POSTGRES_PASSWORD: 2APA_QYPmcncpVDj28ESxQ
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vendure"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: vendure-redis
+    volumes:
+      - redis_data:/data
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: vendure-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      PORT: 3001
+      COOKIE_SECRET: SUEZ8EMMnkppxDoJHdh2Ng
+      SUPERADMIN_USERNAME: superadmin
+      SUPERADMIN_PASSWORD: superadmin
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: vendure
+      DB_USERNAME: vendure
+      DB_PASSWORD: 2APA_QYPmcncpVDj28ESxQ
+      DB_SCHEMA: public
+    expose:
+      - "3001"
+  storefront:
+    build:
+      context: ./apps/storefront
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_VENDURE_SHOP_API_URL: https://api.supernatural-shop.com/shop-api
+    container_name: vendure-storefront
+    environment:
+      NEXT_PUBLIC_VENDURE_SHOP_API_URL: https://api.supernatural-shop.com/shop-api
+    depends_on:
+      - server
+    expose:
+      - "3002"
+volumes:
+  postgres_data:
+  redis_data:

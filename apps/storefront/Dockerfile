@@ -1,0 +1,10 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ARG NEXT_PUBLIC_VENDURE_SHOP_API_URL
+ENV NEXT_PUBLIC_VENDURE_SHOP_API_URL=$NEXT_PUBLIC_VENDURE_SHOP_API_URL
+RUN npm run build
+EXPOSE 3002
+CMD ["npm", "run", "start", "--", "-p", "3002"]
